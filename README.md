@@ -1,11 +1,12 @@
 # 🚀 MasterFabric 100-Day Software Developer Internship Roadmap (From Foundational Skills to Professional Competence)
 
-MasterFabric Information Technology Inc. is dedicated to crafting exceptional software solutions with cutting-edge technology across diverse industries, including healthcare, fintech, e-commerce, and logistics. This 100-day roadmap is designed to empower aspiring developers to become skilled full-stack developers, with tracks in cross-platform mobile development and robust backend services.
+MasterFabric Information Technology Inc. is dedicated to crafting exceptional software solutions—including mobile apps, backend services, and AI-powered systems—with cutting-edge technology across diverse industries. This 100-day roadmap is designed to empower aspiring developers to become skilled professionals, with tracks in cross-platform mobile development, robust backend services, and AI agent development.
 
 ## 🎯 Program Core Objectives
 * **Track Proficiency:** Achieve strong competency in a chosen track:
     * **Mobile Development:** Flutter or Expo/React Native.
     * **Backend Development:** NestJS.
+    * **AI Agent Development:** Building and deploying autonomous agents.
 * **Architectural Mastery:** Implement Clean Code, Design Patterns, and professional application architecture (e.g., State Management for mobile, modular design for backend).
 * **Quality Assurance:** Master the practice of writing comprehensive tests (**Unit**, **Widget/Component**, **E2E**).
 * **Professional Workflow:** Gain experience in API design and integration, performance optimization, and basic **CI/CD** processes.
@@ -39,7 +40,7 @@ Your daily progress and project work must be documented according to the followi
     ├── git/
     │   └── git_roadmap.md       // Detailed 100-day flow for Git
     └── ai-agents/
-        └── ai-agents_roadmap.md // Detailed 10-day flow for AI Agents
+        └── ai-agents_roadmap.md // Detailed 20-day flow for AI Agents
 
 ````
 
