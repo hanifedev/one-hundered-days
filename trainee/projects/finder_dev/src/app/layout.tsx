@@ -3,6 +3,7 @@ import { JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { loadSiteData } from '@/utils/content-loader';
 import { SplashProvider } from '@/components/layout/SplashProvider';
+import { Toaster } from 'sonner';
 
 const jetbrainsMono = JetBrains_Mono({ 
   subsets: ['latin'],
@@ -40,6 +41,7 @@ export default function RootLayout({
         <SplashProvider>
           {children}
         </SplashProvider>
+        <Toaster position="top-right" richColors />
       </body>
     </html>
   );

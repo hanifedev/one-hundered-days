@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -23,9 +23,18 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { loadProfileData, loadTechnologies } from "@/utils/content-loader";
 import { cn } from "@/lib/utils";
 import type { UserProfile, UserSkill, TechnologyCategory } from "@/types/profile";
+import { toast } from "sonner";
+import { Loader2, Camera, Upload, X, Image as ImageIcon, Plus } from "lucide-react";
 
 // Mock user data - in real app, this would come from auth/supabase
 const mockUser = {
@@ -75,6 +84,30 @@ function getInitialProfile(): UserProfile {
   };
 }
 
+// Location data - Country -> Cities
+const locationData: Record<string, string[]> = {
+  "Turkey": ["Istanbul", "Ankara", "Izmir", "Bursa", "Antalya", "Adana"],
+  "United States": ["New York", "San Francisco", "Los Angeles", "Chicago", "Boston", "Seattle"],
+  "United Kingdom": ["London", "Manchester", "Birmingham", "Edinburgh", "Bristol"],
+  "Germany": ["Berlin", "Munich", "Hamburg", "Frankfurt", "Cologne"],
+  "France": ["Paris", "Lyon", "Marseille", "Toulouse", "Nice"],
+  "Japan": ["Tokyo", "Osaka", "Kyoto", "Yokohama", "Sapporo"],
+  "Canada": ["Toronto", "Vancouver", "Montreal", "Calgary", "Ottawa"],
+  "Australia": ["Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide"],
+  "Remote": [],
+};
+
+// Parse location from profile
+const parseLocation = (location: string | undefined) => {
+  if (!location) return { country: "", city: "" };
+  if (location === "Remote") return { country: "Remote", city: "" };
+  const parts = location.split(", ");
+  if (parts.length === 2) {
+    return { country: parts[1], city: parts[0] };
+  }
+  return { country: "", city: "" };
+};
+
 export default function ProfilePage() {
   const pathname = usePathname();
   const profileContent = loadProfileData();
@@ -82,6 +115,57 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile>(getInitialProfile());
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Location state
+  const initialLocation = parseLocation(profile.location);
+  const [selectedCountry, setSelectedCountry] = useState<string>(initialLocation.country);
+  const [selectedCity, setSelectedCity] = useState<string>(initialLocation.city);
+  
+  // Get cities for selected country
+  const availableCities = useMemo(() => {
+    if (!selectedCountry || selectedCountry === "Remote") return [];
+    return locationData[selectedCountry] || [];
+  }, [selectedCountry]);
+  
+  // Update location when country or city changes
+  const updateLocation = (country: string, city: string) => {
+    if (country === "Remote") {
+      setProfile((prev) => ({ ...prev, location: "Remote" }));
+    } else if (country && city) {
+      setProfile((prev) => ({ ...prev, location: `${city}, ${country}` }));
+    } else if (country) {
+      setProfile((prev) => ({ ...prev, location: country }));
+    } else {
+      setProfile((prev) => ({ ...prev, location: "" }));
+    }
+  };
+  
+  const handleCountryChange = (country: string) => {
+    setSelectedCountry(country);
+    setSelectedCity("");
+    if (country === "Remote") {
+      updateLocation("Remote", "");
+    } else {
+      updateLocation(country, "");
+    }
+  };
+  
+  const handleCityChange = (city: string) => {
+    setSelectedCity(city);
+    if (selectedCountry) {
+      updateLocation(selectedCountry, city);
+    }
+  };
+
+  // Sync location state when profile.location changes externally
+  useEffect(() => {
+    const parsed = parseLocation(profile.location);
+    if (parsed.country && parsed.country !== selectedCountry) {
+      setSelectedCountry(parsed.country);
+      setSelectedCity(parsed.city);
+    }
+  }, [profile.location, selectedCountry]);
 
   // Sub-navigation items
   const subNav = [
@@ -175,10 +259,39 @@ export default function ProfilePage() {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    // Validate required fields
+    const trimmedUsername = profile.username?.trim() || "";
+    const trimmedFullName = profile.fullName?.trim() || "";
+    const trimmedRole = profile.role?.trim() || "";
+    
+    if (!trimmedUsername || !trimmedFullName || !trimmedRole) {
+      toast.error("Missing required fields", {
+        description: "Please fill in all required fields (marked with *)",
+      });
+      return;
+    }
+    
     // In real app, this would save to Supabase
     console.log("Saving profile:", profile);
-    // Show toast notification here
+    
+    setIsSaving(true);
+    
+    // Show loading toast
+    const loadingToastId = toast.loading("Saving changes...", {
+      description: "Please wait while we save your profile",
+    });
+    
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    
+    setIsSaving(false);
+    
+    // Dismiss loading toast and show success
+    toast.dismiss(loadingToastId);
+    toast.success("Changes saved!", {
+      description: "Your profile has been updated successfully",
+    });
   };
 
   return (
@@ -226,23 +339,30 @@ export default function ProfilePage() {
               </div>
 
               {/* Photo Management Card */}
-              <Card className="gradient-card border-[hsl(var(--border))] mb-4 rounded-xl shadow-lg p-5">
-                <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-5">
-                  Photo
-                </h2>
-                <div className="flex items-center gap-5">
-                  <div className="relative">
-                    <Avatar className="w-20 h-20 border-2 border-[hsl(var(--border))] rounded-full shadow-md">
-                      {profile.avatarUrl && (
-                        <AvatarImage src={profile.avatarUrl} alt={profile.fullName} className="rounded-full" />
-                      )}
-                      <AvatarFallback className="bg-[hsl(var(--primary))] text-white text-lg font-semibold rounded-full">
-                        {profile.fullName.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label htmlFor="avatar-upload">
+              <Card className="mb-4">
+                <CardHeader>
+                  <CardTitle>Photo</CardTitle>
+                  <CardDescription>
+                    Upload a photo to personalize your profile
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                    <div className="relative group flex-shrink-0">
+                      <Avatar className="h-32 w-32 border-2">
+                        {profile.avatarUrl && (
+                          <AvatarImage src={profile.avatarUrl} alt={profile.fullName} />
+                        )}
+                        <AvatarFallback className="text-2xl">
+                          {profile.fullName.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <label
+                        htmlFor="avatar-upload"
+                        className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      >
+                        <Camera className="h-6 w-6 text-white" />
+                      </label>
                       <input
                         type="file"
                         accept="image/*"
@@ -250,114 +370,195 @@ export default function ProfilePage() {
                         id="avatar-upload"
                         onChange={handleAvatarChange}
                       />
-                      <Button
-                        type="button"
-                        className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90 hover:scale-[1.02] hover:shadow-lg text-white rounded-lg px-4 py-2 text-sm shadow-sm transition-all duration-300"
-                        onClick={() => document.getElementById('avatar-upload')?.click()}
-                      >
-                        Change Photo
-                      </Button>
-                    </label>
-                    <Button
-                      variant="outline"
-                      className="border-red-600/50 text-red-600 bg-transparent hover:bg-red-600 hover:text-white hover:border-red-600 rounded-lg px-4 py-2 text-sm transition-all duration-300"
-                      onClick={() => setProfile({ ...profile, avatarUrl: undefined })}
-                    >
-                      Remove
-                    </Button>
+                    </div>
+                    <div className="flex-1 w-full sm:w-auto space-y-3">
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => document.getElementById('avatar-upload')?.click()}
+                          className="hover:bg-primary/10 hover:text-primary hover:border-primary/50 transition-colors"
+                        >
+                          <Camera className="h-4 w-4 mr-2" />
+                          Change Photo
+                        </Button>
+                        {profile.avatarUrl && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setProfile({ ...profile, avatarUrl: undefined })}
+                            className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50 transition-colors"
+                          >
+                            <X className="h-4 w-4 mr-2" />
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <ImageIcon className="h-4 w-4" />
+                        <span>JPG, PNG or GIF. Max size 2MB</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </CardContent>
               </Card>
 
               {/* Personal Information Card */}
-              <Card className="gradient-card border-[hsl(var(--border))] mb-4 rounded-xl shadow-lg">
-                <div className="p-5">
-                  <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-5">
-                    {profileContent.sections.personalInfo.title}
-                  </h2>
-                  
+              <Card className="mb-4">
+                <CardHeader>
+                  <CardTitle>{profileContent.sections.personalInfo.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
                   <div className="space-y-4">
                     {/* Two-column row: Full Name and Username */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-[hsl(var(--muted-foreground))] mb-2">
-                          {profileContent.sections.personalInfo.fields.fullName}
+                        <label className="block text-sm font-medium mb-2">
+                          <span className="text-red-500">*</span> {profileContent.sections.personalInfo.fields.fullName}
                         </label>
                         <Input
                           value={profile.fullName}
                           onChange={(e) => handleInputChange("fullName", e.target.value)}
-                          className="bg-[hsl(var(--background))] border-[hsl(var(--border))] text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:border-[hsl(var(--primary))] rounded-lg h-10"
                           placeholder="Enter your full name"
+                          required
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {profile.fullName || "Full Name"}
+                        </p>
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-[hsl(var(--muted-foreground))] mb-2">
-                          {profileContent.sections.personalInfo.fields.username}
+                        <label className="block text-sm font-medium mb-2">
+                          <span className="text-red-500">*</span> {profileContent.sections.personalInfo.fields.username}
                         </label>
                         <Input
                           value={profile.username}
                           onChange={(e) => handleInputChange("username", e.target.value)}
-                          className="bg-[hsl(var(--background))] border-[hsl(var(--border))] text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:border-[hsl(var(--primary))] rounded-lg h-10"
                           placeholder="Enter your username"
+                          required
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          @{profile.username || "username"}
+                        </p>
                       </div>
                     </div>
 
                     {/* Role field */}
                     <div>
-                      <label className="block text-sm font-medium text-[hsl(var(--muted-foreground))] mb-2">
-                        {profileContent.sections.personalInfo.fields.role}
+                      <label className="block text-sm font-medium mb-2">
+                        <span className="text-red-500">*</span> {profileContent.sections.personalInfo.fields.role}
                       </label>
-                      <Input
+                      <Select
                         value={profile.role || ""}
-                        onChange={(e) => handleInputChange("role", e.target.value)}
-                        className="bg-[hsl(var(--background))] border-[hsl(var(--border))] text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:border-blue-600 rounded-lg h-10"
-                        placeholder="e.g., Full-Stack Developer"
-                      />
+                        onValueChange={(value) => handleInputChange("role", value)}
+                        required
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select your role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Senior Developer">Senior Developer</SelectItem>
+                          <SelectItem value="Junior Developer">Junior Developer</SelectItem>
+                          <SelectItem value="Trainee">Trainee</SelectItem>
+                          <SelectItem value="Team Lead">Team Lead</SelectItem>
+                          <SelectItem value="Full-Stack Developer">Full-Stack Developer</SelectItem>
+                          <SelectItem value="Frontend Developer">Frontend Developer</SelectItem>
+                          <SelectItem value="Backend Developer">Backend Developer</SelectItem>
+                          <SelectItem value="UI/UX Designer">UI/UX Designer</SelectItem>
+                          <SelectItem value="Product Manager">Product Manager</SelectItem>
+                          <SelectItem value="DevOps Engineer">DevOps Engineer</SelectItem>
+                          <SelectItem value="Mobile Developer">Mobile Developer</SelectItem>
+                          <SelectItem value="Data Scientist">Data Scientist</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {profile.role ? (
+                          <Badge variant="secondary" className="text-xs">
+                            {profile.role}
+                          </Badge>
+                        ) : (
+                          "Not selected"
+                        )}
+                      </div>
                     </div>
 
-                    {/* Location field */}
+                    {/* Location field - Nested Select */}
                     <div>
-                      <label className="block text-sm font-medium text-[hsl(var(--muted-foreground))] mb-2">
+                      <label className="block text-sm font-medium mb-2">
                         {profileContent.sections.personalInfo.fields.location}
                       </label>
-                      <Input
-                        value={profile.location || ""}
-                        onChange={(e) => handleInputChange("location", e.target.value)}
-                        className="bg-[hsl(var(--background))] border-[hsl(var(--border))] text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:border-blue-600 rounded-lg h-10"
-                        placeholder="e.g., San Francisco, CA"
-                      />
+                      <div className="grid grid-cols-2 gap-3">
+                        <Select
+                          value={selectedCountry}
+                          onValueChange={handleCountryChange}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select country" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.keys(locationData).map((country) => (
+                              <SelectItem key={country} value={country}>
+                                {country}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Select
+                          value={selectedCity}
+                          onValueChange={handleCityChange}
+                          disabled={!selectedCountry || selectedCountry === "Remote"}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={selectedCountry === "Remote" ? "Remote" : "Select city"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableCities.map((city) => (
+                              <SelectItem key={city} value={city}>
+                                {city}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {profile.location || "Not selected"}
+                      </p>
                     </div>
 
                     {/* Bio field */}
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <label className="block text-sm font-medium text-[hsl(var(--muted-foreground))]">
+                        <label className="block text-sm font-medium">
                           {profileContent.sections.personalInfo.fields.bio}
                         </label>
-                        <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                        <span className="text-xs text-muted-foreground">
                           {(profile.bio || "").length}/500
                         </span>
                       </div>
                       <Textarea
                         value={profile.bio || ""}
                         onChange={(e) => handleInputChange("bio", e.target.value)}
-                        className="bg-[hsl(var(--background))] border-[hsl(var(--border))] text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:border-blue-600 h-[120px] resize-none rounded-lg"
                         placeholder="Tell us about yourself..."
                         maxLength={500}
+                        className="h-[120px] resize-none"
                       />
+                      {profile.bio && (
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                          {profile.bio}
+                        </p>
+                      )}
                     </div>
                   </div>
-                </div>
+                </CardContent>
               </Card>
 
               {/* Skills Card */}
-              <Card className="gradient-card border-[hsl(var(--border))] mb-4 rounded-xl shadow-lg">
-                <div className="p-5">
-                  <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-5">
-                    {profileContent.sections.skills.title}
-                  </h2>
+              <Card className="mb-4">
+                <CardHeader>
+                  <CardTitle>{profileContent.sections.skills.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
                   
                   {/* Existing Skills - Blue rounded badges */}
                   {profile.skills && profile.skills.length > 0 ? (
@@ -389,9 +590,10 @@ export default function ProfilePage() {
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className="border-[hsl(var(--primary))] text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] hover:text-white hover:scale-[1.02] hover:shadow-md rounded-lg px-4 py-2 text-sm transition-all duration-300"
+                        className="hover:bg-accent transition-colors"
                       >
-                        + {profileContent.sections.skills.addSkill}
+                        <Plus className="h-4 w-4 mr-2" />
+                        {profileContent.sections.skills.addSkill}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[400px] p-0 rounded-xl shadow-xl" align="start">
@@ -426,22 +628,32 @@ export default function ProfilePage() {
                       </Command>
                     </PopoverContent>
                   </Popover>
-                </div>
+                </CardContent>
               </Card>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 justify-end">
+              <div className="flex gap-2 justify-end pt-4 border-t border-border">
                 <Button
-                  variant="outline"
-                  className="border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] rounded-lg px-6 py-2"
+                  variant="ghost"
+                  onClick={() => window.history.back()}
+                  className="hover:bg-destructive/10 hover:text-destructive transition-colors"
                 >
                   {profileContent.actions.cancel}
                 </Button>
                 <Button
                   onClick={handleSave}
-                  className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90 hover:scale-[1.02] hover:shadow-lg text-white rounded-lg px-6 py-2 shadow-sm transition-all duration-300"
+                  disabled={isSaving}
+                  variant="ghost"
+                  className="hover:bg-green-600/10 hover:text-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {profileContent.actions.save}
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    profileContent.actions.save
+                  )}
                 </Button>
               </div>
             </main>
