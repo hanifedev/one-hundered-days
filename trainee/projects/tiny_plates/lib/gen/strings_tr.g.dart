@@ -54,6 +54,31 @@ class TranslationsTr with BaseTranslations<AppLocale, Translations> implements T
 	@override String get onboardingNoPages => 'Onboarding sayfası yok';
 	@override String get onboardingLoadFailed => 'Yüklenemedi';
 	@override String get diary => 'Günlük';
+	@override String get profileSetupTitle => 'Çocuk Profili';
+	@override String get profileStep => 'Adım';
+	@override String get profileNext => 'İleri';
+	@override String get profilePrevious => 'Geri';
+	@override String get profileSave => 'Profili Kaydet';
+	@override String get profileContinue => 'Devam Et';
+	@override String get profileAgeTitle => 'Çocuğunuz kaç aylık?';
+	@override String get profileAgeDescription => 'Beslenme planını kişiselleştirmek için çocuğunuzun yaşını ay olarak girin.';
+	@override String get profileAgeLabel => 'Yaş (ay)';
+	@override String get profileAgeHint => 'ör. 8';
+	@override String get profileAgeNote => '0 ile 36 ay arasında bir değer girin.';
+	@override String get profileAllergiesTitle => 'Alerji var mı?';
+	@override String get profileAllergiesDescription => 'Geçerli olan tüm alerjenleri seçin. Güvensiz yiyecekleri otomatik olarak filtreleyeceğiz.';
+	@override String get profileChewingTitle => 'Çiğneme düzeyi';
+	@override String get profileTextureTitle => 'Doku toleransı';
+	@override String get profileSpecialTitle => 'Özel durumlar ve duyusal tercihler';
+	@override String get profileIsPrematureLabel => 'Çocuğum prematüre doğdu';
+	@override String get profileDietaryNeedsLabel => 'Özel diyet ihtiyaçları';
+	@override String get profileDietaryNeedsHint => 'ör. vegan, helal, kosher…';
+	@override String get profileFoodIntolerancesLabel => 'Gıda intoleransları';
+	@override String get profileFoodIntolerancesHint => 'ör. laktoz, gluten…';
+	@override String get profileSensoryTitle => 'Duyusal tercihler';
+	@override String get profileSavedTitle => 'Profil kaydedildi!';
+	@override String get profileSavedSubtitle => 'Çocuğunuzun doku düzeyine göre kişiselleştirilmiş bir ipucu.';
+	@override String get profileGuidanceTitle => 'AI Doku İpucu';
 }
 
 /// The flat map containing all translations for locale <tr>.
@@ -81,6 +106,31 @@ extension on TranslationsTr {
 			'onboardingNoPages' => 'Onboarding sayfası yok',
 			'onboardingLoadFailed' => 'Yüklenemedi',
 			'diary' => 'Günlük',
+			'profileSetupTitle' => 'Çocuk Profili',
+			'profileStep' => 'Adım',
+			'profileNext' => 'İleri',
+			'profilePrevious' => 'Geri',
+			'profileSave' => 'Profili Kaydet',
+			'profileContinue' => 'Devam Et',
+			'profileAgeTitle' => 'Çocuğunuz kaç aylık?',
+			'profileAgeDescription' => 'Beslenme planını kişiselleştirmek için çocuğunuzun yaşını ay olarak girin.',
+			'profileAgeLabel' => 'Yaş (ay)',
+			'profileAgeHint' => 'ör. 8',
+			'profileAgeNote' => '0 ile 36 ay arasında bir değer girin.',
+			'profileAllergiesTitle' => 'Alerji var mı?',
+			'profileAllergiesDescription' => 'Geçerli olan tüm alerjenleri seçin. Güvensiz yiyecekleri otomatik olarak filtreleyeceğiz.',
+			'profileChewingTitle' => 'Çiğneme düzeyi',
+			'profileTextureTitle' => 'Doku toleransı',
+			'profileSpecialTitle' => 'Özel durumlar ve duyusal tercihler',
+			'profileIsPrematureLabel' => 'Çocuğum prematüre doğdu',
+			'profileDietaryNeedsLabel' => 'Özel diyet ihtiyaçları',
+			'profileDietaryNeedsHint' => 'ör. vegan, helal, kosher…',
+			'profileFoodIntolerancesLabel' => 'Gıda intoleransları',
+			'profileFoodIntolerancesHint' => 'ör. laktoz, gluten…',
+			'profileSensoryTitle' => 'Duyusal tercihler',
+			'profileSavedTitle' => 'Profil kaydedildi!',
+			'profileSavedSubtitle' => 'Çocuğunuzun doku düzeyine göre kişiselleştirilmiş bir ipucu.',
+			'profileGuidanceTitle' => 'AI Doku İpucu',
 			_ => null,
 		};
 	}

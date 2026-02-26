@@ -6,6 +6,7 @@ import 'package:tiny_plates/app/views/view_diary/diary_view.dart';
 import 'package:tiny_plates/app/views/view_home/home_view.dart';
 import 'package:tiny_plates/app/views/view_onboarding/onboarding_view.dart';
 import 'package:tiny_plates/app/views/view_settings/settings_view.dart';
+import 'package:tiny_plates/app/views/view_user_profile/user_profile_view.dart';
 
 /// Splash from masterfabric_core. Onboarding from tiny_plates view_onboarding.
 /// After splash, check onboarding and navigate to /onboarding or /home.
@@ -60,6 +61,16 @@ final GoRouter appRouter = GoRouter(
             context.go(path);
           },
           arguments: const {'onboarding': true},
+        );
+      },
+    ),
+
+    /// User profile setup – outside dashboard shell (no bottom nav).
+    GoRoute(
+      path: '/user-profile',
+      builder: (BuildContext context, GoRouterState state) {
+        return UserProfileView(
+          goRoute: (String path) => context.go(path),
         );
       },
     ),
